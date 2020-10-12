@@ -18,7 +18,7 @@ import config as cfg
 gt_relative_position = None
 est_relative_position = None
 prev_time = None
-pid_on_off = False
+pid_on_off = True
 
 def gt_callback(data):
     global gt_relative_position
@@ -47,12 +47,12 @@ def gt_callback(data):
     # Rotation of the body frame wrt. the world frame
     r_0_2 = R.from_quat([q_x, q_y, q_z, q_w])
     r_2_0 = r_0_2.inv()
-    
+
 
     ##########
     # 0 -> 1 #
     ##########
-    
+
     # Translation of the world frame to landing frame wrt. the world frame
     offset_x = 1.0
     offset_y = 0.0
@@ -68,7 +68,7 @@ def gt_callback(data):
     # 2 -> 1 #
     ##########
     # Transformation of the body frame to landing frame wrt. the body frame
-    
+
     # Translation of the landing frame to bdy frame wrt. the landing frame
     d_1_2 = d_0_2 - d_0_1
 
@@ -156,7 +156,7 @@ def controller(state):
         actuation_reduction_array[1] = actuation_reduction_x_y
 
     actuation = (Kp*error + Kd*error_derivative + Ki*error_integral)*actuation_reduction_array
-    
+
     actuation_clipped = np.clip(actuation, -actuation_saturation, actuation_saturation)
 
     # Stop integration when the controller saturates and the system error and the manipulated variable have the same sign
@@ -183,9 +183,9 @@ def main():
     else:
         rospy.Subscriber('/drone_ground_truth', Twist, estimate_callback)
 
-    
+
     # rospy.Subscriber('/ground_truth/state', Odometry, gt_callback)
-    
+
     rospy.Subscriber('/set_point', Twist, set_point_callback)
 
 
@@ -193,7 +193,7 @@ def main():
 
     rospy.Subscriber('/pid_on_off', Bool, pid_on_off_callback)
 
-    
+
     reference_pub = rospy.Publisher('/drone_reference', Twist, queue_size=10)
     # pose_pub = rospy.Publisher('/drone_pose', Twist, queue_size=10)
     error_pub = rospy.Publisher('/drone_error', Twist, queue_size=10)
@@ -280,7 +280,7 @@ def main():
 
 
         rate.sleep()
-    
-    
+
+
 if __name__ == '__main__':
     main()
