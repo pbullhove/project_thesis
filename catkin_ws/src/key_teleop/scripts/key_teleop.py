@@ -14,7 +14,7 @@ import math
 
 import rospy
 from geometry_msgs.msg import Twist
-from std_msgs.msg import Bool
+from std_msgs.msg import Bool, Empty
 
 
 
@@ -186,6 +186,7 @@ class SimpleKeyTeleop():
         self._interface = interface
         self._pub_cmd = rospy.Publisher('key_vel', Twist)
         self._pub_ctr_switch = rospy.Publisher('/controller_switch', Bool)
+        self._pub_take_still_photo = rospy.Publisher('/take_still_photo', Empty)
 
         self._hz = rospy.get_param('~hz', 10)
 
@@ -283,12 +284,14 @@ class SimpleKeyTeleop():
             self._controller_on = 1
         elif keycode == ord('o'):
             self._controller_on = 0
+        elif keycode == ord('1'):
+            self._pub_take_still_photo.publish(Empty())
         elif keycode in self.movement_bindings:
             self._last_pressed[keycode] = rospy.get_time()
 
     def _publish(self):
-        self._interface.clear()        
-        
+        self._interface.clear()
+
         self._interface.write_line(2, 'Linear_x: %f' % (self._linear_x))
         self._interface.write_line(3, 'Linear_z: %f' % (self._linear_z))
         self._interface.write_line(4, 'Angular: %f' % (self._angular))
@@ -296,7 +299,7 @@ class SimpleKeyTeleop():
 
         self._interface.write_line(6, 'Controller: %f' % (self._controller_on))
 
-        
+
         self._interface.write_line(8, 'Use arrow keys to move, q to exit.')
         self._interface.refresh()
 
