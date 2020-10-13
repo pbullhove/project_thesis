@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-import os
 from std_msgs.msg import Empty
 from sensor_msgs.msg import Image
 
