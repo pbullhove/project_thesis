@@ -6,6 +6,7 @@
 *.svg
 *.csv
 *.pyc
+*.xml
 *.json
 *.h5
 *.zip
@@ -18,4 +19,3 @@ catkin_ws/src/ddpg
 catkin_ws/src/ddpg_controller/scripts/results
 investigations/nn_training/
 parrot-groundsdk/
-
