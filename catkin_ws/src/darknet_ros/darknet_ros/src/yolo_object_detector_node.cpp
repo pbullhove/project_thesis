@@ -6,8 +6,8 @@
  *   Institute: ETH Zurich, Robotic Systems Lab
  */
 
-#include <ros/ros.h>
 #include <darknet_ros/YoloObjectDetector.hpp>
+#include <ros/ros.h>
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "darknet_ros");

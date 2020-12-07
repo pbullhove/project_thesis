@@ -3,8 +3,8 @@
 <launch>
 
   <!-- Use YOLOv3 -->
-  <arg name="network_param_file"         default="$(find darknet_ros)/config/yolov4.yaml"/>
-  <arg name="image" default="/ardrone/bottom/image_raw" />
+  <arg name="network_param_file"         default="$(find darknet_ros)/config/yolov2-tiny.yaml"/>
+  <arg name="image" default="camera/rgb/image_raw" />
 
 
   <!-- Include main launch file -->
