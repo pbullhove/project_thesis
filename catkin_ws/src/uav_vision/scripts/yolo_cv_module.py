@@ -46,14 +46,37 @@ IMG_HEIGHT = 360
 #
 # global_image = None
 #
+H_scaling = [(1.0, 1.0), (0.975, 0.989), (0.951, 0.978), (0.928, 0.968),
+(0.907, 0.958), (0.887, 0.948), (0.869, 0.94), (0.851, 0.931),
+(0.834, 0.923), (0.818, 0.916), (0.803, 0.909), (0.789, 0.902),
+ (0.775, 0.895), (0.762, 0.889), (0.75, 0.884), (0.738, 0.878),
+ (0.727, 0.873), (0.717, 0.869), (0.707, 0.864), (0.697, 0.86),
+  (0.688, 0.856), (0.68, 0.853), (0.672, 0.85), (0.664, 0.847),
+   (0.656, 0.844), (0.649, 0.842), (0.643, 0.84), (0.636, 0.838),
+    (0.63, 0.836), (0.624, 0.835), (0.619, 0.834), (0.614, 0.833),
+     (0.609, 0.832), (0.604, 0.832), (0.6, 0.832), (0.595, 0.832),
+     (0.591, 0.833), (0.588, 0.833), (0.584, 0.834), (0.581, 0.836),
+      (0.578, 0.837), (0.575, 0.839), (0.572, 0.841), (0.57, 0.843),
+       (0.568, 0.846), (0.566, 0.849), (0.564, 0.852), (0.562, 0.855),
+        (0.561, 0.859), (0.559, 0.863), (0.558, 0.867), (0.557, 0.872),
+         (0.556, 0.876), (0.556, 0.882), (0.555, 0.887), (0.555, 0.893),
+          (0.555, 0.899), (0.555, 0.906), (0.555, 0.913), (0.555, 0.92),
+           (0.556, 0.928), (0.557, 0.936), (0.557, 0.945), (0.559, 0.954),
+            (0.56, 0.964), (0.561, 0.974), (0.563, 0.984), (0.564, 0.996),
+             (0.566, 1.007), (0.569, 1.02), (0.571, 1.033), (0.573, 1.046),
+              (0.576, 1.06), (0.579, 1.075), (0.582, 1.091), (0.586, 1.108),
+               (0.589, 1.125), (0.593, 1.143), (0.597, 1.163), (0.601, 1.183),
+               (0.606, 1.205), (0.611, 1.227), (0.616, 1.251), (0.621, 1.276),
+               (0.626, 1.303), (0.632, 1.331), (0.639, 1.361), (0.645, 1.393),
+                (0.652, 1.426), (0.659, 1.462), (0.667, 1.5)]
 # #################
 # # Help functions #
 # #################
 
-def rad_to_deg(rad):
+def rad2deg(rad):
     return rad*180/math.pi
 
-def deg_to_rad(deg):
+def deg2rad(deg):
     return deg*math.pi/180
 
 
@@ -113,8 +136,27 @@ def get_test_bounding_boxes():
     Helipad.id = 2
     Helipad.Class = "Helipad"
 
+    H = BoundingBox()
+    H.probability = 0.5
+    H.xmin = 320
+    H.ymin = 128
+    H.xmax = 330
+    H.ymax = 138
+    H.id = 0
+    H.Class = "H"
+
+    Arrow = BoundingBox()
+    Arrow.probability = 0.5
+    Arrow.xmin = 333
+    Arrow.ymin = 140
+    Arrow.xmax = 335
+    Arrow.ymax = 143
+    Arrow.id = 1
+    Arrow.Class = "Arrow"
+
+
     bbs = BoundingBoxes()
-    bbs.bounding_boxes = [Helipad]
+    bbs.bounding_boxes = [Helipad, H, Arrow]
     return bbs
 
 
@@ -212,27 +254,62 @@ def est_radius_of_bb(bb):
     radius = int(max(width, height)/2)
     return radius
 
+def est_rotation(H, Arrow):
+    # rotation defined as positive right of line between H and arrow.
+    x_h, y_h = est_center_of_bb(H)
+    x_a, y_a = est_center_of_bb(Arrow)
+    theta = math.atan2(y_a-y_h, x_a-x_h)
+    theta -= math.pi/2
+    theta *= -1
+    return theta
 
-def estimate_center_and_radius_px(bounding_boxes):
+def downscale_H_by_rotation(H, rotation):
+    cx, cy = est_center_of_bb(H)
+    theta = int(rad2deg(rotation))
+    theta = theta % 180
+    theta = abs(theta)
+
+    cos = abs(math.cos(rotation))
+    sin = abs(math.sin(rotation))
+    scaling_width = (cos*2 + sin*3)/2
+    scaling_height = (sin*2 + cos*3)/3
+
+    width = H.xmax - H.xmin
+    height = H.ymax - H.ymin
+    new_width = width * scaling_width
+    new_height = height * scaling_height
+
+    H.xmin = cx - int(new_width/2)
+    H.ymin = cy - int(new_height/2)
+    H.xmax = cx + int(new_width/2)
+    H.ymax = cy + int(new_height/2)
+
+    return H
+
+
+def estimate_center_rotation_and_radius(bounding_boxes):
     # rospy.loginfo(bounding_boxes)
     classes = list(item.Class for item in bounding_boxes)
     rospy.loginfo(classes)
-
+    center = [None, None]
+    radius = None
+    rotation = None
     if 'H' in classes:
+        H = find_best_bb_of_class(bounding_boxes, 'H')
         if 'Arrow' in classes:
-            pass
-        else:
-            pass
-
-    elif 'Helipad' in classes:
-        Helipad = find_best_bb_of_class(bounding_boxes, 'Helipad')
-        center = est_center_of_bb(Helipad)
-        radius = est_radius_of_bb(Helipad)
+            Arrow = find_best_bb_of_class(bounding_boxes, 'Arrow')
+            rotation = est_rotation(H, Arrow)
+            H = downscale_H_by_rotation(H, rotation)
+        center = est_center_of_bb(H)
+        radius = 3*est_radius_of_bb(H)
 
     else:
-        center = [None, None]
-        radius = None
-    return center, radius
+        if 'Helipad' in classes:
+            Helipad = find_best_bb_of_class(bounding_boxes, 'Helipad')
+            center = est_center_of_bb(Helipad)
+            radius = est_radius_of_bb(Helipad)
+
+    return center, radius, rotation
 #
 # def publish_ground_truth(current_ground_truth):
 #     global pub_ground_truth
@@ -314,8 +391,8 @@ def main():
         if current_bounding_boxes is not None:
             if current_bounding_boxes != previous_bounding_boxes:
                 previous_bounding_boxes = current_bounding_boxes
-                center_px, radius_px = estimate_center_and_radius_px(current_bounding_boxes.bounding_boxes)
-                rospy.loginfo('center_px: %s,  radius_px: %s', center_px, radius_px)
+                center_px, radius_px, rotation = estimate_center_rotation_and_radius(current_bounding_boxes.bounding_boxes)
+                rospy.loginfo('center_px: %s,  radius_px: %s,  rotation: %s', center_px, radius_px, rotation)
                 current_pose_estimate = transform_pixel_position_to_world_coordinates(center_px, radius_px)
                 rospy.loginfo(current_pose_estimate)
 
