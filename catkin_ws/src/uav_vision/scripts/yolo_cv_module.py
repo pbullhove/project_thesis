@@ -15,40 +15,50 @@ import math
 # bridge = CvBridge()
 #
 # import color_settings
-# import config as cfg
+import config as cfg
 #
 # # For ground truth callback:
 # from nav_msgs.msg import Odometry
 # from scipy.spatial.transform import Rotation as R
 #
-# # Settings
-# global_is_simulator = cfg.is_simulator
+# Settings
+global_is_simulator = cfg.is_simulator
 # save_images = cfg.save_images
 # draw_on_images = cfg.draw_on_images
 # use_test_image = cfg.use_test_image
 #
 #
-# if global_is_simulator:
-#     camera_offset_x = 150 # mm
-#     camera_offset_z = -45 # mm
-# else:
-#     camera_offset_x = -60 # mm
-#     camera_offset_z = -45 # mm
-#
+if global_is_simulator:
+    camera_offset_x = 150 # mm
+    camera_offset_z = -45 # mm
+else:
+    camera_offset_x = -60 # mm
+    camera_offset_z = -45 # mm
+
 # # Constants
 # D_H_SHORT = 4.0 # cm
 # D_H_LONG = 12.0 # cm
 # D_ARROW = 30.0 # cm
 # D_RADIUS = 39.0 # cm
 #
-# IMG_WIDTH = 640
-# IMG_HEIGHT = 360
+IMG_WIDTH = 640
+IMG_HEIGHT = 360
 #
 # global_image = None
 #
 # #################
 # # Help functions #
 # #################
+
+def rad_to_deg(rad):
+    return rad*180/math.pi
+
+def deg_to_rad(deg):
+    return deg*math.pi/180
+
+
+
+
 # def hsv_save_image(image, label='image', is_gray=False):
 #     if image is None:
 #         print "The image with label " + label + " is none"
@@ -97,8 +107,9 @@ def get_test_bounding_boxes():
     Helipad = BoundingBox()
     Helipad.probability = 0.5
     Helipad.xmin = 312
-    Helipad.ymax = 148
+    Helipad.ymin = 120
     Helipad.xmax = 337
+    Helipad.ymax = 148
     Helipad.id = 2
     Helipad.Class = "Helipad"
 
@@ -155,35 +166,51 @@ def bb_callback(data):
 #     return error
 #
 #
+
+def transform_pixel_position_to_world_coordinates(center_px, radius_px):
+    focal_length = 374.67
+    real_radius = 390 # mm (780mm in diameter / 2)
+
+    # Center of image
+    x_0 = IMG_HEIGHT/2.0
+    y_0 = IMG_WIDTH/2.0
+
+    # Find distances from center of image to center of LP
+    d_x = x_0 - center_px[0]
+    d_y = y_0 - center_px[1]
+
+    est_z = real_radius*focal_length / radius_px
+
+    # Camera is placed 150 mm along x-axis of the drone
+    # Since the camera is pointing down, the x and y axis of the drone
+    # is the inverse of the x and y axis of the camera
+    est_x = -((est_z * d_x / focal_length) + camera_offset_x) # mm adjustment for translated camera frame in x direction
+    est_y = -(est_z * d_y / focal_length)
+    est_z += camera_offset_z # mm adjustment for translated camera frame in z direction
+
+    position = np.array([est_x, est_y, est_z]) / 1000.0
+
+    return position
+
 #
-# def transform_pixel_position_to_world_coordinates(center_px, radius_px):
-#     focal_length = 374.67
-#     real_radius = 390 # mm (780mm in diameter / 2)
 #
-#     # Center of image
-#     x_0 = IMG_HEIGHT/2.0
-#     y_0 = IMG_WIDTH/2.0
-#
-#     # Find distances from center of image to center of LP
-#     d_x = x_0 - center_px[0]
-#     d_y = y_0 - center_px[1]
-#
-#     est_z = real_radius*focal_length / radius_px
-#
-#     # Camera is placed 150 mm along x-axis of the drone
-#     # Since the camera is pointing down, the x and y axis of the drone
-#     # is the inverse of the x and y axis of the camera
-#     est_x = -((est_z * d_x / focal_length) + camera_offset_x) # mm adjustment for translated camera frame in x direction
-#     est_y = -(est_z * d_y / focal_length)
-#     est_z += camera_offset_z # mm adjustment for translated camera frame in z direction
-#
-#     position = np.array([est_x, est_y, est_z]) / 1000.0
-#
-#     return position
-#
-#
-#
-def get_center_of_bb(bb):
+def find_best_bb_of_class(bounding_boxes, classname):
+    matches =  list(item for item in bounding_boxes if item.Class == classname)
+    best = max(matches, key=lambda x: x.probability)
+    return best
+
+def est_center_of_bb(bb):
+    width = bb.xmax - bb.xmin
+    height = bb.ymax - bb.ymin
+    center = [bb.xmin + width/2,bb.ymin + height/2]
+    map(int, center)
+    return center
+
+def est_radius_of_bb(bb):
+    width = bb.xmax - bb.xmin
+    height = bb.ymax - bb.ymin
+    radius = int(max(width, height)/2)
+    return radius
 
 
 def estimate_center_and_radius_px(bounding_boxes):
@@ -191,8 +218,21 @@ def estimate_center_and_radius_px(bounding_boxes):
     classes = list(item.Class for item in bounding_boxes)
     rospy.loginfo(classes)
 
+    if 'H' in classes:
+        if 'Arrow' in classes:
+            pass
+        else:
+            pass
 
-    return None, None
+    elif 'Helipad' in classes:
+        Helipad = find_best_bb_of_class(bounding_boxes, 'Helipad')
+        center = est_center_of_bb(Helipad)
+        radius = est_radius_of_bb(Helipad)
+
+    else:
+        center = [None, None]
+        radius = None
+    return center, radius
 #
 # def publish_ground_truth(current_ground_truth):
 #     global pub_ground_truth
@@ -259,6 +299,7 @@ def main():
 
     use_test_bbs = 1
     previous_bounding_boxes = None
+    current_pose_estimate = None
     count = 0
     rate = rospy.Rate(10) # Hz
     while not rospy.is_shutdown():
@@ -274,7 +315,9 @@ def main():
             if current_bounding_boxes != previous_bounding_boxes:
                 previous_bounding_boxes = current_bounding_boxes
                 center_px, radius_px = estimate_center_and_radius_px(current_bounding_boxes.bounding_boxes)
-
+                rospy.loginfo('center_px: %s,  radius_px: %s', center_px, radius_px)
+                current_pose_estimate = transform_pixel_position_to_world_coordinates(center_px, radius_px)
+                rospy.loginfo(current_pose_estimate)
 
 
 
