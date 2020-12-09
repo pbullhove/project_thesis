@@ -26,7 +26,6 @@ from scipy.spatial.transform import Rotation as R
 
 # Settings
 global_is_simulator = cfg.is_simulator
-
 save_images = cfg.save_images
 draw_on_images = cfg.draw_on_images
 use_test_image = cfg.use_test_image
@@ -579,83 +578,6 @@ def clip_corners_not_right(corners, img, average_filter_size):
     hsv_save_image(bw_blurred, "blurred", is_gray=True)
 
     return new_corners, new_values
-
-
-
-# def clip_corners_not_right(corners, img, average_filter_size):
-
-#     bw_edges = cv2.Canny(img,100,200)
-#     radius = np.int0(average_filter_size / 2.0)
-#     center = (radius, radius)
-
-
-#     bw_circles = np.zeros((average_filter_size, average_filter_size), np.uint8)
-#     bw_canvas = np.zeros((360, 640, 1), np.uint8)
-
-#     cv2.circle(bw_circles, center, radius, (255,0,0), 1)
-
-#     circle = np.where(bw_circles==255)
-#     # circle_new = np.array([circle[0], circle[1]])
-
-#     for corner in corners:
-#         shift_center = corner - center
-#         shifted_circle = np.array([circle[0]+shift_center[0], circle[1]+shift_center[1]])
-
-
-#         bw_canvas[shifted_circle[0], shifted_circle[1]] = 255
-
-
-#     bw_corner_area = cv2.bitwise_and(bw_canvas, bw_edges)
-
-
-
-#     hsv_save_image(bw_edges, "bw_edges", is_gray=True)
-#     hsv_save_image(bw_canvas, "bw_circles", is_gray=True)
-#     hsv_save_image(bw_corner_area, "bw_draft", is_gray=True)
-
-#     return corners
-
-# def clip_corners_not_right(corners, img, average_filter_size):
-#     bw_draft = img.copy()
-#     bw_circles = np.zeros((360,640,1), np.uint8)
-
-#     ret, bw_thresh = cv2.threshold(bw_draft, 127, 255, 0)
-
-#     min_angle = 80
-#     max_angle = 100
-
-#     min_area = min_angle / 360.0
-#     max_area = max_angle / 360.0
-
-
-
-#     radius = np.int0(average_filter_size/2.0)
-#     color = (255,0,0)
-#     thickness = -1
-
-#     for corner in corners:
-#         center = (corner[1], corner[0])
-#         print center
-#         cv2.circle(bw_circles, center, radius, color, thickness)
-#         bw_area = cv2.bitwise_and(bw_circles, bw_thresh)
-#         # bw_corner_area = cv2.bitwise_and(bw_circles, bw_edges)
-#         result = np.where(bw_corner_area == 255)
-
-#         if len(result[0]) != 0:
-#             print len(result[0])
-#             break
-
-
-
-
-#     hsv_save_image(bw_circles, "bw_circles", is_gray=True)
-#     hsv_save_image(bw_area, "bw_edges", is_gray=True)
-#     # hsv_save_image(bw_corner_area, "bw_draft", is_gray=True)
-
-#     print "Clip_corners_not_right done"
-#     print
-
-#     return corners
 
 
 def find_right_angled_corners(img):
@@ -1261,6 +1183,7 @@ def publish_ground_truth(current_ground_truth):
 
 def main():
     global pub_ground_truth
+
     global pub_est_ellipse
     global pub_est_arrow
     global pub_est_corners
@@ -1272,10 +1195,8 @@ def main():
     global global_ground_truth
     global global_image
 
-    rospy.init_node('cv_module', anonymous=True)
-
+    rospy.init_node('yolo_cv_module', anonymous=True)
     rospy.Subscriber('/ardrone/bottom/image_raw', Image, image_callback)
-    # rospy.Subscriber('/ground_truth/state', Odometry, gt_callback)
     rospy.Subscriber('/drone_ground_truth', Twist, gt_callback)
 
     pub_processed_image = rospy.Publisher('/processed_image', Image, queue_size=10)
@@ -1289,7 +1210,7 @@ def main():
     pub_est_error_corners = rospy.Publisher("/estimate_error/corners", Twist, queue_size=10)
 
 
-    pub_est = rospy.Publisher("/estimate_single", Twist, queue_size=10)
+    pub_est = rospy.Publisher("/yolo_estimate", Twist, queue_size=10)
     pub_est_method = rospy.Publisher("/estimate_method", Int8, queue_size=10)
 
     est_msg = Twist()
