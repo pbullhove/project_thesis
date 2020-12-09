@@ -154,26 +154,11 @@ def get_test_bounding_boxes():
     Arrow.id = 1
     Arrow.Class = "Arrow"
 
-
     bbs = BoundingBoxes()
     bbs.bounding_boxes = [Helipad, H, Arrow]
     return bbs
 
 
-# ####
-# ####
-# ####
-#
-#
-# global_image = None
-# def image_callback(data):
-#     global global_image
-#
-#     try:
-#         global_image = bridge.imgmsg_to_cv2(data, 'bgr8') # {'bgr8' or 'rgb8}
-#     except CvBridgeError as e:
-#         rospy.loginfo(e)
-#
 global_ground_truth = None
 def gt_callback(data):
     global global_ground_truth
@@ -184,14 +169,10 @@ global_bounding_boxes = None
 def bb_callback(data):
     global global_bounding_boxes
     global_bounding_boxes = data
-#
-#
-# ####
-# ####
-# ####
-#
-#
-# def calculate_estimation_errors(estimate, gt):
+
+
+
+# def calculate_estimation_error(estimate, gt):
 #     global pub_est_error_Helipad
 #     global pub_est_error_H
 #     global pub_est_error_H_scaled
@@ -206,8 +187,6 @@ def bb_callback(data):
 #     error.angular.z = estimate.angular.z - gt[5]
 #
 #     return error
-#
-#
 
 def transform_pixel_position_to_world_coordinates(center_px, radius_px):
     focal_length = 374.67
@@ -234,8 +213,6 @@ def transform_pixel_position_to_world_coordinates(center_px, radius_px):
 
     return position
 
-#
-#
 def find_best_bb_of_class(bounding_boxes, classname):
     matches =  list(item for item in bounding_boxes if item.Class == classname)
     best = max(matches, key=lambda x: x.probability)
@@ -326,14 +303,10 @@ def estimate_center_rotation_and_radius(bounding_boxes):
 def main():
 #     global pub_ground_truth
 #
-#     global pub_est_Helipad
-#     global pub_est_H
-#     global pub_est_Scaled_H
-#
-#     global pub_est_error_Helipad
-#     global pub_est_error_H
-#     global pub_est_error_Scaled_H
-#-
+#     global pub_est_pose
+
+#     global pub_est_pose_error
+
 #     global global_ground_truth
 #     global yolo_output_image
 
@@ -357,22 +330,12 @@ def main():
     # pub_est = rospy.Publisher("/yolo_estimate", Twist, queue_size=10)
     # pub_est_method = rospy.Publisher("/estimate_method", Int8, queue_size=10)
     #
-    # est_msg = Twist()
-    #
-    # rospy.loginfo("Starting yolo_CV module")
-    #
-    #
-    #
+    est_pose_msg = Twist()
+
+    rospy.loginfo("Starting yolo_CV module")
     # if not global_is_simulator:
     #     global_ground_truth = np.zeros(6)
-    #
-    #
-    # if use_test_image:
-    #     test_image_filepath = './image_36.png'
-    #     # test_image_filepath = './0_hsv.png'
-    #     global_image = load_bgr_image(test_image_filepath)
-    #
-    #     # corner_test()
+
 
     use_test_bbs = 1
     previous_bounding_boxes = None
@@ -380,26 +343,20 @@ def main():
     count = 0
     rate = rospy.Rate(10) # Hz
     while not rospy.is_shutdown():
-        # rospy.loginfo('In loop')
-        #
         current_ground_truth = global_ground_truth # Fetch the latest ground truth pose available
         if use_test_bbs:
             current_bounding_boxes = get_test_bounding_boxes()
         else:
             current_bounding_boxes = global_bounding_boxes
         # rospy.loginfo(global_bounding_boxes)
-        if current_bounding_boxes is not None:
-            if current_bounding_boxes != previous_bounding_boxes:
-                previous_bounding_boxes = current_bounding_boxes
-                center_px, radius_px, rotation = estimate_center_rotation_and_radius(current_bounding_boxes.bounding_boxes)
-                rospy.loginfo('center_px: %s,  radius_px: %s,  rotation: %s', center_px, radius_px, rotation)
-                current_pose_estimate = transform_pixel_position_to_world_coordinates(center_px, radius_px)
-                rospy.loginfo(current_pose_estimate)
+        if (current_bounding_boxes is not None) and (current_bounding_boxes != previous_bounding_boxes):
+            previous_bounding_boxes = current_bounding_boxes
+            center_px, radius_px, rotation = estimate_center_rotation_and_radius(current_bounding_boxes.bounding_boxes)
+            rospy.loginfo('center_px: %s,  radius_px: %s,  rotation: %s', center_px, radius_px, rotation)
+            current_pose_estimate = transform_pixel_position_to_world_coordinates(center_px, radius_px)
+            rospy.loginfo('current_est: %s', current_pose_estimate)
 
 
-
-        else:
-            rospy.loginfo("current_bounding_boxes: %s", current_bounding_boxes)
 
         # if (global_image is not None) and (current_ground_truth is not None):
         #     # denoised = cv2.fastNlMeansDenoisingColored(global_image,None,10,10,7,21) # denoising
