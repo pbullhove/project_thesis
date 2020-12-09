@@ -303,33 +303,23 @@ def estimate_center_rotation_and_radius(bounding_boxes):
 def main():
 #     global pub_ground_truth
 #
-#     global pub_est_pose
-
-#     global pub_est_pose_error
-
+#     global pub_est
+#
+#     global pub_est_error
+#
 #     global global_ground_truth
-#     global yolo_output_image
 
     rospy.init_node('yolo_cv_module', anonymous=True)
+
     rospy.Subscriber('/drone_ground_truth', Twist, gt_callback)
     rospy.Subscriber('/darknet_ros/bounding_boxes', BoundingBoxes, bb_callback)
-    # rospy.Subscriber('/darknet_ros/detection_image')
 
+    # rospy.Subscriber('/darknet_ros/detection_image')
     #
-    # pub_bb_processed_image = rospy.Publisher('/bb_processed_image', Image, queue_size=10)
+    # pub_est = rospy.Publisher("/estimate/yolo_estimate", Twist, queue_size=10)
     #
-    # pub_est_Helipad = rospy.Publisher("/estimate/Helipad", Twist, queue_size=10)
-    # pub_est_H = rospy.Publisher("/estimate/H", Twist, queue_size=10)
-    # pub_est_Scaled_H = rospy.Publisher("/estimate/Scaled_H", Twist, queue_size=10)
-    #
-    # pub_est_error_Helipad = rospy.Publisher("/estimate_error/error_Helipad", Twist, queue_size=10)
-    # pub_est_error_H = rospy.Publisher("/estimate_error/error_H", Twist, queue_size=10)
-    # pub_est_error_Scaled_H = rospy.Publisher("/estimate_error/error_Scaled_H", Twist, queue_size=10)est_px
-    #
-    #
-    # pub_est = rospy.Publisher("/yolo_estimate", Twist, queue_size=10)
-    # pub_est_method = rospy.Publisher("/estimate_method", Int8, queue_size=10)
-    #
+    # pub_est_error = rospy.Publisher("/estimate_error/yolo_error", Twist, queue_size=10)
+
     est_pose_msg = Twist()
 
     rospy.loginfo("Starting yolo_CV module")
