@@ -43,7 +43,7 @@ def main():
     global est_relative_position
     rospy.init_node('filter', anonymous=True)
 
-    rospy.Subscriber('/estimate_single', Twist, estimate_callback)
+    rospy.Subscriber('/estimate/tcv_estimate', Twist, estimate_callback)
     filtered_estimate_pub = rospy.Publisher('/filtered_estimate', Twist, queue_size=10)
 
     rospy.loginfo("Starting filter for estimate")
