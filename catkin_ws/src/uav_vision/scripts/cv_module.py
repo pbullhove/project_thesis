@@ -1415,8 +1415,6 @@ def main():
             est_msg.angular.z = est[5]
             pub_est.publish(est_msg)
 
-            # publish_ground_truth(current_ground_truth)
-
             count += 1
             if use_test_image:
                 break

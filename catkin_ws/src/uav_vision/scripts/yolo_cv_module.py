@@ -234,8 +234,8 @@ def main():
 
         if current_pose_estimate is not None:
             pub_est.publish(current_pose_estimate)
-        if current_ground_truth is not None:
-            pub_ground_truth.publish(current_ground_truth)
+        # if current_ground_truth is not None:
+        #     pub_ground_truth.publish(current_ground_truth)
 
 
         rate.sleep()
