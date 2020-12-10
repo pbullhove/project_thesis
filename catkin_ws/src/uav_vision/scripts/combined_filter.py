@@ -14,12 +14,15 @@ import math
 import config as cfg
 
 
-est_relative_position = None
+yolo_estimate = None
+def yolo_estimate_callback(data):
+    global yolo_estimate
+    yolo_estimate = np.array([data.linear.x, data.linear.y, data.linear.z, data.angular.x, data.angular.y, data.angular.z])
 
-
-def estimate_callback(data):
-    global est_relative_position
-    est_relative_position = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
+tcv_estimate = None
+def tcv_estimate_callback(data):
+    global tcv_estimate
+    tcv_estimate = np.array([data.linear.x, data.linear.y, data.linear.z, data.angular.x, data.angular.y, data.angular.z])
 
 
 def filter_estimate(estimate, estimate_history, median_filter_size, average_filter_size):
@@ -40,44 +43,44 @@ def filter_estimate(estimate, estimate_history, median_filter_size, average_filt
 
 
 def main():
-    global est_relative_position
-    rospy.init_node('yolo_filter', anonymous=True)
+    global tcv_estimate
+    global yolo_estimate
+    rospy.init_node('combined_filter', anonymous=True)
 
-    rospy.Subscriber('/estimate/yolo_estimate', Twist, estimate_callback)
+    rospy.Subscriber('/estimate/yolo_estimate', Twist, yolo_estimate_callback)
+    rospy.Subscriber('/estimate/tcv_estimate', Twist, tcv_estimate_callback)
+
     filtered_estimate_pub = rospy.Publisher('/filtered_estimate', Twist, queue_size=10)
-
-    rospy.loginfo("Starting yolo filter for estimate")
-
     filtered_estimate_msg = Twist()
 
-    # Set up filter
-    # median_filter_size = 5
-    # average_filter_size = 20
-    median_filter_size = 1
-    average_filter_size = 1
+    rospy.loginfo("Starting combined filter for estimate")
+
+    average_filter_size = 5
+    median_filter_size = 5
 
     estimate_history_size = median_filter_size + average_filter_size - 1
     estimate_history = np.zeros((estimate_history_size,6))
 
+    est_filtered = np.zeros(6)
+    est_filtered_prev = None
     rate = rospy.Rate(50) # Hz
     while not rospy.is_shutdown():
 
-        if est_relative_position is not None:
+        if tcv_estimate is not None:
+            est_filtered, estimate_history = filter_estimate(tcv_estimate, estimate_history, median_filter_size, average_filter_size)
+            tcv_estimate = None
+        #
+        # if yolo_estimate is not None:
+        #     est_filtered, estimate_history = filter_estimate(yolo_estimate, estimate_history, median_filter_size, average_filter_size)
+        #     yolo_estimate = None
 
-            if np.array_equal(est_relative_position, np.zeros(6)):
-                est_filtered = np.zeros(6)
-            else:
-                est_filtered, estimate_history = filter_estimate(est_relative_position, estimate_history, median_filter_size, average_filter_size)
-
+        if not (est_filtered == est_filtered_prev).all():
             filtered_estimate_msg.linear.x = est_filtered[0]
             filtered_estimate_msg.linear.y = est_filtered[1]
             filtered_estimate_msg.linear.z = est_filtered[2]
             filtered_estimate_msg.angular.z = est_filtered[5]
             filtered_estimate_pub.publish(filtered_estimate_msg)
-
-            # Mark the estimate as used to avoid filtering the same estimate again
-            est_relative_position = None
-
+            est_filtered_prev = est_filtered
         rate.sleep()
 
 
