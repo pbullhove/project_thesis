@@ -187,6 +187,8 @@ class SimpleKeyTeleop():
         self._pub_cmd = rospy.Publisher('key_vel', Twist)
         self._pub_ctr_switch = rospy.Publisher('/controller_switch', Bool)
         self._pub_take_still_photo = rospy.Publisher('/take_still_photo', Empty)
+        self._pub_initiate_automated_landing = rospy.Publisher('/initiate_automated_landing', Empty)
+
 
         self._hz = rospy.get_param('~hz', 10)
 
@@ -286,6 +288,8 @@ class SimpleKeyTeleop():
             self._controller_on = 0
         elif keycode == ord('1'):
             self._pub_take_still_photo.publish(Empty())
+        elif keycode == ord('L'):
+            self._pub_initiate_automated_landing.publish(Empty())
         elif keycode in self.movement_bindings:
             self._last_pressed[keycode] = rospy.get_time()
 
