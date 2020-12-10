@@ -33,15 +33,17 @@ V_YAW = 5
 def plot_data(stored_array, methods_to_plot, variables_to_plot, plot_error=False, plot_z_to_the_right=False, z_right_color='g'):
     t_id = 0            # Time index
     g_id = 1            # Ground truth index
-    e_id = g_id + 6     # Ellipse index
-    a_id = e_id + 6     # Arrow index
-    c_id = a_id + 6     # Corner index
-    d_id = c_id + 6     # Dead reckoning index
+    y_id = g_id + 6 # Yolo index
+    # e_id = g_id + 6     # Ellipse index
+    # a_id = e_id + 6     # Arrow index
+    # c_id = a_id + 6     # Corner index
+    # d_id = c_id + 6     # Dead reckoning index
 
-    error_e_id = d_id + 6     # Ellipse error index
-    error_a_id = error_e_id + 6     # Arrow error index
-    error_c_id = error_a_id + 6     # Corner error index
-    error_d_id = error_c_id + 6     # Dead reckoning error index
+    error_y_id = y_id + 6
+    # error_e_id = d_id + 6     # Ellipse error index
+    # error_a_id = error_e_id + 6     # Arrow error index
+    # error_c_id = error_a_id + 6     # Corner error index
+    # error_d_id = error_c_id + 6     # Dead reckoning error index
 
     time_stamps = stored_array[:, t_id]
 
@@ -61,28 +63,34 @@ def plot_data(stored_array, methods_to_plot, variables_to_plot, plot_error=False
     ]
     titles_methods = [
         "Ground truth",
-        "Ellipse",
-        "Arrow",
-        "Corners",
-        "Dead reckogning",
-        "Ellipse error",
-        "Arrow error",
-        "Corners error",
-        "Dead reckogning error",
+        "YOLO",
+        "YOLO error"
+        # "Ellipse",
+        # "Arrow",
+        # "Corners",
+        # "Dead reckogning",
+        # "Ellipse error",
+        # "Arrow error",
+        # "Corners error",
+        # "Dead reckogning error",
     ]
-    indices_methods = [g_id, e_id, a_id, c_id, d_id,
-        error_e_id, error_a_id, error_c_id, error_d_id
-    ]
+    # indices_methods = [g_id, e_id, a_id, c_id, d_id,
+    #     error_e_id, error_a_id, error_c_id, error_d_id
+    # ]
+    indices_methods = [g_id, y_id, error_y_id]
+
     colors_methods = [
         "g",        # green:    "Ground truth"
-        "b",        # blue:     "Ellipse"
-        "r",        # red:      "Arrow"
-        "orange",   # orange:   "Corners"
-        "k",        # black:    "Dead reckogning"
-        "b",        # blue:     "Ellipse error"
-        "r",        # red:      "Arrow error"
-        "orange",   # orange:   "Corners error"
-        "k"         # black:    "Dead reckogning error"
+        "b",
+        "r"
+        # "b",        # blue:     "Ellipse"
+        # "r",        # red:      "Arrow"
+        # "orange",   # orange:   "Corners"
+        # "k",        # black:    "Dead reckogning"
+        # "b",        # blue:     "Ellipse error"
+        # "r",        # red:      "Arrow error"
+        # "orange",   # orange:   "Corners error"
+        # "k"         # black:    "Dead reckogning error"
     ]
     y_ticks_error_pos = np.arange(-0.10, 0.11, 0.025)
     y_ticks_error_rot = np.arange(-10, 11, 2)
@@ -114,7 +122,7 @@ def plot_data(stored_array, methods_to_plot, variables_to_plot, plot_error=False
             data = stored_array[:, index:index+6][:,variable]
             time_stamps_local = time_stamps.copy()
             time_stamps_local[np.isnan(data)] = np.nan
-      
+
             line, = ax.plot(time_stamps_local, data)
             line.set_color(line_color)
             line.set_label(legend_text)
@@ -130,7 +138,7 @@ def plot_data(stored_array, methods_to_plot, variables_to_plot, plot_error=False
             # ax.xaxis.grid()
             # ax.yaxis.grid()
             # ax.grid()
-        
+
         if plot_z_to_the_right:
             # Plot the z ground truth
             gt_method = 0
@@ -157,7 +165,7 @@ def plot_data(stored_array, methods_to_plot, variables_to_plot, plot_error=False
         plt.grid()
 
         fig.tight_layout()
-        
+
         folder = './plots/'
         plt.savefig(folder+title+'.svg')
 
@@ -246,23 +254,23 @@ def plot_data_manually(stored_array):
         if i % 2 == 1:
             for j in range(4):
                 if (i==7 and j==1): # Skip the ellipse yaw estimate
-                   continue 
+                   continue
 
                 index = index_values[j]
                 color = color_values[j]
                 legend_text = legend_values[j]
-            
+
                 data = stored_array[:, index:index+6][:,variable]
-            
+
                 time_stamps_local = time_stamps.copy()
                 time_stamps_local[np.isnan(data)] = np.nan
-        
+
                 line, = ax.plot(time_stamps_local, data)
                 line.set_color(color)
 
                 if i == 1:
                     legend_lines.append(line)
-            
+
         # Plot the estimate errors
         if i % 2 == 0:
             ax.axhline(y=0, color='grey', linestyle='--') # Plot the zero-line
@@ -271,16 +279,16 @@ def plot_data_manually(stored_array):
                 if (i==8 and j==0): # Skip the ellipse yaw estimate
                     continue
                 index = index_errors[j]
-                color = color_errors[j]            
+                color = color_errors[j]
 
                 data = stored_array[:, index:index+6][:,variable]
-            
+
                 time_stamps_local = time_stamps.copy()
                 time_stamps_local[np.isnan(data)] = np.nan
-        
+
                 line, = ax.plot(time_stamps_local, data)
                 line.set_color(color)
-            
+
         ax.set_ylabel(y_label)
         ax.set_yticks(y_tics)
 
@@ -299,7 +307,7 @@ def plot_data_manually(stored_array):
 
     # plt.show()
 
-    
+
 def plot_hover_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover_10m):
     file_titles = ['Hover_x', 'Hover_y', 'Hover_z', 'None', 'None', 'Hover_yaw']
     titles = ['z=0.5m','z=1m','z=2.0m','z=3m','z=5m','z=10m']
@@ -341,16 +349,16 @@ def plot_hover_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover
                 index = index_values[j]
                 color = color_values[j]
                 legend_text = legend_values[j]
-            
+
                 data = hover_data[:, index:index+6][:,variable]
-            
+
                 time_stamps_local = time_stamps.copy()
                 time_stamps_local[np.isnan(data)] = np.nan
-        
+
                 line, = ax.plot(time_stamps_local, data)
                 line.set_color(color)
                 line.set_label(legend_text if i==1 else "_nolegend_")
-            
+
             ax.set_ylabel(y_label)
 
             if variable == V_X:
@@ -358,7 +366,7 @@ def plot_hover_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover
             elif variable == V_Y:
                 ax.set_yticks(y_ytics[i])
             elif variable == V_Z:
-                ax.set_yticks(z_ytics[i]) 
+                ax.set_yticks(z_ytics[i])
             elif variable == V_YAW:
                 ax.set_yticks(yaw_ytics[i])
 
@@ -376,7 +384,7 @@ def plot_hover_error_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m,
     file_titles = ['Hover_error_x', 'Hover_error_y', 'Hover_error_z', 'None', 'None', 'Hover_error_yaw']
     titles = ['z=0.5m','z=1m','z=2.0m','z=3m','z=5m','z=10m']
     all_hover_data = np.array([hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover_10m])
-    
+
     index_values = [31, 37, 43]
     color_values = ['blue', 'red', 'orange']
     legend_values = ['ellipse', 'arrow', 'corners']
@@ -417,16 +425,16 @@ def plot_hover_error_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m,
                 index = index_values[j]
                 color = color_values[j]
                 legend_text = legend_values[j]
-            
+
                 data = hover_data[:, index:index+6][:,variable]
-            
+
                 time_stamps_local = time_stamps.copy()
                 time_stamps_local[np.isnan(data)] = np.nan
-        
+
                 line, = ax.plot(time_stamps_local, data)
                 line.set_color(color)
                 line.set_label(legend_text if i==1 else "_nolegend_")
-            
+
             ax.set_ylabel(y_label)
 
             if variable == V_X:
@@ -434,7 +442,7 @@ def plot_hover_error_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m,
             elif variable == V_Y:
                 ax.set_yticks(y_ytics[i])
             elif variable == V_Z:
-                ax.set_yticks(z_ytics[i]) 
+                ax.set_yticks(z_ytics[i])
             elif variable == V_YAW:
                 ax.set_yticks(yaw_ytics[i])
 
@@ -477,9 +485,9 @@ def plot_step_z(data_step_z):
             index = index_values[i]
             color = color_values[i]
             legend_text = legend_values[i]
-        
+
             data = data_step_z[:, index:index+6][:,variable]
-        
+
             time_stamps_local = time_stamps.copy()
             time_stamps_local[np.isnan(data)] = np.nan
 
@@ -488,7 +496,7 @@ def plot_step_z(data_step_z):
             line.set_label(legend_text)
 
         plt.legend()
-        
+
         fig.tight_layout()
 
         folder = './plots/'
@@ -519,9 +527,9 @@ def plot_dead_reckoning_test(data_dead_reckoning_test):
             index = index_values[i]
             color = color_values[i]
             legend_text = legend_values[i]
-        
+
             data = data_dead_reckoning_test[:, index:index+6][:,variable]
-        
+
             time_stamps_local = time_stamps.copy()
             time_stamps_local[np.isnan(data)] = np.nan
 
@@ -530,7 +538,7 @@ def plot_dead_reckoning_test(data_dead_reckoning_test):
             line.set_label(legend_text)
 
         plt.legend()
-        
+
         fig.tight_layout()
 
         folder = './plots/'
@@ -556,7 +564,7 @@ def plot_dead_reckoning_xy(data_dead_reckoning_test):
         index = index_values[i]
         color = color_values[i]
         legend_text = legend_values[i]
-    
+
         data_x = data_dead_reckoning_test[:, index:index+6][:,V_X]
         data_y = data_dead_reckoning_test[:, index:index+6][:,V_Y]
 
@@ -565,7 +573,7 @@ def plot_dead_reckoning_xy(data_dead_reckoning_test):
         line.set_label(legend_text)
 
     plt.legend()
-    
+
     fig.tight_layout()
 
     folder = './plots/'
@@ -678,7 +686,7 @@ def plot_landing(data_landing, additional_title=''):
     elif additional_title == '_automated':
         aspect_xy = 0.85
         aspect_xz = 0.4
-        aspect_yz = 0.4 
+        aspect_yz = 0.4
     elif additional_title == '_ddpg':
         aspect_xy = 1.1
         aspect_xz = 0.4
@@ -795,9 +803,9 @@ def plot_yaw_test(data_yaw_test):
             index = index_values[i]
             color = color_values[i]
             legend_text = legend_values[i]
-        
+
             data = data_yaw_test[:, index:index+6][:,variable]
-        
+
             time_stamps_local = time_stamps.copy()
             time_stamps_local[np.isnan(data)] = np.nan
 
@@ -806,7 +814,7 @@ def plot_yaw_test(data_yaw_test):
             line.set_label(legend_text)
 
         plt.legend()
-        
+
         fig.tight_layout()
 
         folder = './plots/'
@@ -841,9 +849,9 @@ def plot_hold_hover(data_hold_hover_test):
             index = index_values[i]
             color = color_values[i]
             legend_text = legend_values[i]
-        
+
             data = data_hold_hover_test[:, index:index+6][:,variable]
-        
+
             time_stamps_local = time_stamps.copy()
             time_stamps_local[np.isnan(data)] = np.nan
 
@@ -852,7 +860,7 @@ def plot_hold_hover(data_hold_hover_test):
             line.set_label(legend_text)
 
         plt.legend()
-        
+
         fig.tight_layout()
 
         folder = './plots/'
@@ -890,9 +898,9 @@ def plot_outside_flight(data_outside_test):
             index = index_values[i]
             color = color_values[i]
             legend_text = legend_values[i]
-        
+
             data = data_outside_test[:, index:index+6][:,variable]
-        
+
             time_stamps_local = time_stamps.copy()
             time_stamps_local[np.isnan(data)] = np.nan
 
@@ -902,7 +910,7 @@ def plot_outside_flight(data_outside_test):
 
         if variable==V_X:
             plt.legend()
-    
+
     fig.tight_layout()
 
     folder = './plots/'
@@ -930,7 +938,7 @@ def calculate_accuracy(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover
     variables = [V_X, V_Y, V_Z, V_YAW]
     variable_headings = ['x-position', 'y-position', 'z-position', 'yaw-rotation']
     variable_units = [' [mm]', ' [mm]', ' [mm]', ' [deg]']
-    
+
     heights = [0.5 , 1.0, 2.0, 3.0, 5.0, 10.0]
     data_heights = [hover_0_5m , hover_1m, hover_2m, hover_3m, hover_5m, hover_10m]
 
@@ -941,7 +949,7 @@ def calculate_accuracy(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover
         heading = variable_headings[index_v]
         print "+-" + '-'*len(heading) + '-+'
         print "| " + heading + ' |'
-        print "+-" + '-'*len(heading) + '-+' 
+        print "+-" + '-'*len(heading) + '-+'
         variable = variables[index_v]
         variable_unit = variable_units[index_v]
 
@@ -967,7 +975,7 @@ def calculate_accuracy(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover
                 else:
                     convertion = 1
                 data_method = data_method[~np.isnan(data_method)]*convertion # Remove nan values and perform convertion
-                
+
                 if availability != 0 and not (variable == V_YAW and legend_method == 'ellipse'):
                     min_error = np.min(data_method)
                     max_error = np.max(data_method)
@@ -980,91 +988,67 @@ def calculate_accuracy(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover
                     min_error, max_error, mean, std = '-', '-', '-', '-'
                     print "| {:>6.1f}m | {:>8} | {:>11} {:>11} {:>11} {:>11} {:>6.0f}% |".format(height, legend_method, min_error, max_error, mean, std, availability)
 
-            
+
             print "+"+"-"* (len(header)-2)+"+"
 
 
+def yolo_plot(data):
+    n = len(data)
+    t_i = 0
+    gt_i = 1
+    yolo_i = gt_i + 6
+    yolo_error_i = yolo_i + 6
+
+    time = np.zeros(n)
+    gt = np.zeros((n,6))
+    yolo = np.zeros((n,6))
+    yolo_error = np.zeros((n,6))
+    for i, data_point in enumerate(data):
+        time[i] = data_point[t_i]
+        gt[i] = data_point[gt_i:gt_i+6]
+        yolo[i] = data_point[yolo_i:yolo_i+6]
+        yolo_error[i] = data_point[yolo_error_i:yolo_error_i+6]
+
+
+    file_title = 'yolo_v4_tiny_estimate_vs_gt_hovering'
+    variables = ['x', 'y', 'z', 'yaw']
+    legend_values = ['est_x', 'est_y' ,'est_z', 'est_yaw in degreess']
+    subtitles = variables
+    fig = plt.figure(figsize=(12,8))
+    plt.title('Yolo estimate while hovering')
+    for i in range(4):
+        k = i + 2 if i == 3 else i
+        ax = plt.subplot(2,2,i+1)
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel('[deg]' if i == 3 else '[m]')
+        ax.axhline(y=0, color='grey', linestyle='--')
+        ax.legend(legend_values[i])
+        plt.grid()
+        plt.title(subtitles[i])
+        data_line, = ax.plot(time,yolo[:,k], color='b')
+        data_line.set_label('yolo_estimate')
+        gt_line, = ax.plot(time,gt[:,k], color='r')
+        plt.legend([data_line, gt_line],[legend_values[i],'ground truth'])
+
+    folder = './catkin_ws/src/uav_vision/data_storage/plots/'
+    plt.savefig(folder+file_title+'.svg')
+
+    fig.tight_layout()
+    fig.show()
+
+    try:
+        plt.waitforbuttonpress(0)
+        plt.close()
+    except Exception as e:
+        pass
+
 def main():
-    # Load the data
-    folder = './catkin_ws/src/uav_vision/data_storage/final_data/'
-    
-    # Up and down test
-    filename = 'test_1_up_down.npy'
-    up_and_down_5m = np.load(folder + filename, allow_pickle=True)
+    folder = './catkin_ws/src/uav_vision/data_storage/'
 
-    # Hover tests
-    filename = 'test_2_hover_05.npy'
-    hover_0_5m = np.load(folder + filename, allow_pickle=True)
+    filename = 'test_1.npy'
+    data_test_1 = np.load(folder + filename, allow_pickle=True)
 
-    filename = 'test_3_hover_1.npy'
-    hover_1m = np.load(folder + filename, allow_pickle=True)
-
-    filename = 'test_4_hover_2.npy'
-    hover_2m = np.load(folder + filename, allow_pickle=True)
-
-    filename = 'test_5_hover_3.npy'
-    hover_3m = np.load(folder + filename, allow_pickle=True)
-
-    filename = 'test_6_hover_5.npy'
-    hover_5m = np.load(folder + filename, allow_pickle=True)
-
-    filename = 'test_7_hover_10.npy'
-    hover_10m = np.load(folder + filename, allow_pickle=True)
-
-    # Step test
-    filename = 'test_8_filter.npy'
-    data_step_z = np.load(folder + filename, allow_pickle=True)
-
-    # Dead reckoning test
-    filename = 'test_54_dead_reckoning.npy'
-    data_dead_reckoning_test = np.load(folder + filename, allow_pickle=True)
-
-    # Yaw test
-    filename = 'test_53_yaw.npy'
-    data_yaw_test = np.load(folder + filename, allow_pickle=True)
-
-    # Outdoor test
-    filename = 'test_33_outdoor.npy'
-    data_outside_test = np.load(folder + filename, allow_pickle=True)
-
-    # Simulator landing, automated landing
-    filename = 'test_41_automated_landing.npy'
-    data_simulator_landing_automated = np.load(folder + filename, allow_pickle=True)
-
-    # Simulator landing, ddpg
-    filename = 'test_42_ddpg_landing.npy'
-    data_simulator_landing_ddpg = np.load(folder + filename, allow_pickle=True)
-    
-
-    #################
-    # Plot the data #
-    #################
-    # plot_data_manually(up_and_down_5m)
-
-    # plot_hover_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover_10m)
-    
-    # plot_hover_error_compare(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover_10m)
-
-    # plot_step_z(data_step_z)
-
-    # plot_dead_reckoning_test(data_dead_reckoning_test)
-    # plot_dead_reckoning_xy(data_dead_reckoning_test)
-
-    # plot_yaw_test(data_yaw_test)
-
-    # plot_hold_hover(data_hold_hover_test)
-    
-    
-    plot_landing(data_simulator_landing_automated, '_automated')
-    plot_landing(data_simulator_landing_ddpg, '_ddpg')
-
-    # plot_outside_flight(data_outside_test)
-    
-
-    #####################
-    # Calculate on data #
-    #####################
-    # calculate_accuracy(hover_0_5m, hover_1m, hover_2m, hover_3m, hover_5m, hover_10m)
+    yolo_plot(data_test_1)
 
 
 if __name__ == '__main__':

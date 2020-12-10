@@ -78,24 +78,43 @@ global_filtered_estimate = np.zeros(6)
 def filtered_estimate_callback(data):
     global global_filtered_estimate
     global_filtered_estimate = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
+
+
+global_est_yolo = np.zeros(6)
+def estimate_yolo_callback(data):
+    global global_est_yolo
+    global_est_yolo = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
+
+global_est_error_yolo = np.zeros(6)
+def estimate_error_yolo_callback(data):
+    global global_est_error_yolo
+    global_est_error_yolo = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
 ######################
 
 
-def start_data_collection_callback(data):
+# def start_data_collection_callback(data):
+#     global global_collect_data
+#     global received_signal
+#     global start_time
+#     global_collect_data = True
+#     received_signal = True
+#     start_time = rospy.get_time()
+#     rospy.loginfo("Start data collection")
+#
+#
+# def stop_data_collection_callback(data):
+#     global global_collect_data
+#     global_collect_data = False
+#     stop_time = rospy.get_time()
+#     rospy.loginfo("Stop data collection")
+
+def data_collection_callback(data):
     global global_collect_data
     global received_signal
     global start_time
-    global_collect_data = True
-    received_signal = True
-    start_time = rospy.get_time()
-    rospy.loginfo("Start data collection")
-
-
-def stop_data_collection_callback(data):
-    global global_collect_data
-    global_collect_data = False
-    stop_time = rospy.get_time()
-    rospy.loginfo("Stop data collection")
+    received_signal = True if global_collect_data else False
+    global_collect_data = True if not global_collect_data else False
+    start_time = rospy.get_time() if start_time == None else start_time
 
 
 def main(test_number):
@@ -115,10 +134,14 @@ def main(test_number):
     rospy.Subscriber('/estimate_error/corners', Twist, estimate_error_corners_callback)
     rospy.Subscriber('/estimate_error/dead_reckoning', Twist, estimate_error_dead_reckoning_callback)
 
-    rospy.Subscriber('/filtered_estimate', Twist, filtered_estimate_callback)  
+    rospy.Subscriber('/filtered_estimate', Twist, filtered_estimate_callback)
 
-    rospy.Subscriber('/initiate_mission', Empty, start_data_collection_callback)
-    rospy.Subscriber('/take_still_photo', Empty, stop_data_collection_callback)
+    # rospy.Subscriber('/initiate_mission', Empty, start_data_collection_callback)
+    # rospy.Subscriber('/take_still_photo', Empty, stop_data_collection_callback)
+    rospy.Subscriber('/start_data_collection', Empty, data_collection_callback)
+
+    rospy.Subscriber('/estimate/yolo_estimate', Twist, estimate_yolo_callback)
+    rospy.Subscriber('/estimate_error/yolo_error', Twist, estimate_error_yolo_callback)
 
     pub_heartbeat = rospy.Publisher("/heartbeat_data_collection", Empty, queue_size=10)
     heartbeat_msg = Empty()
@@ -128,9 +151,9 @@ def main(test_number):
     rospy.loginfo("... Ready!")
 
     data_array = []
-        
+
     duration = 1500 # seconds
-    
+
     rate = rospy.Rate(20) # Hz
     while not rospy.is_shutdown():
         curr_time = rospy.get_time()
@@ -144,17 +167,20 @@ def main(test_number):
                 # Ground truth
                 global_est_ground_truth,
                 # Estimate
-                global_est_ellipse,
-                global_est_arrow,
-                global_est_corners,
-                global_est_dead_reckoning,
+                # global_est_ellipse,
+                # global_est_arrow,
+                # global_est_corners,
+                # global_est_dead_reckoning,
+                global_est_yolo,
+
                 # Estimate errors
-                global_est_error_ellipse,
-                global_est_error_arrow,
-                global_est_error_corners,
-                global_est_error_dead_reckoning,
+                # global_est_error_ellipse,
+                # global_est_error_arrow,
+                # global_est_error_corners,
+                # global_est_error_dead_reckoning,
+                global_est_error_yolo
                 # Filtered estimate
-                global_filtered_estimate
+                # global_filtered_estimate
                 )
             )
             # print len(data_array)
@@ -177,21 +203,10 @@ def main(test_number):
     filename = 'test_'+str(test_number)+'.npy'
     path = folder+filename
     np.save(path, np.array(data_array))
-    
-    
+
+
 if __name__ == '__main__':
-    # 31 Landing inside
-    # 33 Flying outside (stopped a bit late) second last video on mobile camera
-    #                (outdoor_04 film)
-    # 34 Flying outside no mobile camera (outdoor_06 screen capture)
-
-    # 41 New automated landing
-    # 42 New DDPG landing
-
-    # 53 New yaw test
-
-    # 54 New dead reckoning
-
-    test_number = 54
+    # 1 is hovering with Thomas' algorithm
+    test_number = 1
 
     main(test_number)
