@@ -201,7 +201,7 @@ def main():
 
     pub_est = rospy.Publisher("/estimate/yolo_estimate", Twist, queue_size=10)
     pub_ground_truth = rospy.Publisher('/drone_ground_truth', Twist, queue_size=10)
-    # pub_est_error = rospy.Publisher("/estimate_error/yolo_error", Twist, queue_size=10)
+    pub_error = rospy.Publisher("/estimate_error/yolo_error", Twist, queue_size=10)
 
     est_pose_msg = Twist()
 
@@ -234,6 +234,8 @@ def main():
 
         if current_pose_estimate is not None:
             pub_est.publish(current_pose_estimate)
+        if current_error is not None:
+            pub_error.publish(current_error)
         # if current_ground_truth is not None:
         #     pub_ground_truth.publish(current_ground_truth)
 
