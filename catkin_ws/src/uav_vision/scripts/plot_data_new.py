@@ -133,12 +133,12 @@ def yolo_plot(data):
 def main():
     folder = './catkin_ws/src/uav_vision/data_storage/'
 
-    filename = 'yolov4t-hovering.npy'
+    filename = 'yolov4t-hovering-tcv.npy'
     data_test_1 = np.load(folder + filename, allow_pickle=True)
 
     yolo_plot(data_test_1)
-    # plot_xy(data_test_1)
-    # plot_xyz(data_test_1)
+    plot_xy(data_test_1)
+    plot_xyz(data_test_1)
 
 
 if __name__ == '__main__':
