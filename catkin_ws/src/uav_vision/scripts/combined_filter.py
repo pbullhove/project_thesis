@@ -69,10 +69,12 @@ def main():
         if tcv_estimate is not None:
             est_filtered, estimate_history = filter_estimate(tcv_estimate, estimate_history, median_filter_size, average_filter_size)
             tcv_estimate = None
-        #
-        # if yolo_estimate is not None:
-        #     est_filtered, estimate_history = filter_estimate(yolo_estimate, estimate_history, median_filter_size, average_filter_size)
-        #     yolo_estimate = None
+
+        if yolo_estimate is not None:
+            if -0.1 < yolo_estimate[5] < 0.1:
+                yolo_estimate[5] = np.average(estimate_history[:,5])
+            est_filtered, estimate_history = filter_estimate(yolo_estimate, estimate_history, median_filter_size, average_filter_size)
+            yolo_estimate = None
 
         if not (est_filtered == est_filtered_prev).all():
             filtered_estimate_msg.linear.x = est_filtered[0]
