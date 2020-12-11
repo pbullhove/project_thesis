@@ -75,6 +75,7 @@ def get_test_bounding_boxes():
 
 
 def transform_pixel_position_to_world_coordinates(center_px, radius_px):
+    center_px = (center_px[1], center_px[0]) # such that x = height, y = width for this
     focal_length = 374.67
     real_radius = 390 # mm (780mm in diameter / 2)
 
@@ -125,14 +126,14 @@ def find_best_bb_of_class(bounding_boxes, classname):
 def est_center_of_bb(bb):
     width = bb.xmax - bb.xmin
     height = bb.ymax - bb.ymin
-    center = [bb.xmin + width/2,bb.ymin + height/2]
+    center = [bb.xmin + width/2.0 ,bb.ymin + height/2.0]
     map(int, center)
     return center
 
 def est_radius_of_bb(bb):
     width = bb.xmax - bb.xmin
     height = bb.ymax - bb.ymin
-    radius = int(max(width, height)/2)
+    radius = (width + height)/4
     return radius
 
 def est_rotation(H, Arrow):
@@ -169,9 +170,10 @@ def downscale_H_by_rotation(H, rotation):
 
 
 def estimate_center_rotation_and_radius(bounding_boxes):
+    H_bb_radius_scale_factor = 2.45
     # rospy.loginfo(bounding_boxes)
     classes = list(item.Class for item in bounding_boxes)
-    rospy.loginfo(classes)
+    # rospy.loginfo(classes)
     center = [None, None]
     radius = None
     rotation = None
@@ -182,7 +184,7 @@ def estimate_center_rotation_and_radius(bounding_boxes):
             rotation = est_rotation(H, Arrow)
             H = downscale_H_by_rotation(H, rotation)
         center = est_center_of_bb(H)
-        radius = 3*est_radius_of_bb(H)
+        radius = H_bb_radius_scale_factor*est_radius_of_bb(H)
 
     else:
         if 'Helipad' in classes:
@@ -190,6 +192,7 @@ def estimate_center_rotation_and_radius(bounding_boxes):
             center = est_center_of_bb(Helipad)
             radius = est_radius_of_bb(Helipad)
 
+    rospy.loginfo('\ncenter: %s \nradius %s\nrotation: %s', center, radius, rotation)
     return center, radius, rotation
 
 
@@ -202,6 +205,7 @@ def main():
     pub_est = rospy.Publisher("/estimate/yolo_estimate", Twist, queue_size=10)
     pub_ground_truth = rospy.Publisher('/drone_ground_truth', Twist, queue_size=10)
     pub_error = rospy.Publisher("/estimate_error/yolo_error", Twist, queue_size=10)
+    pub_center_radius = rospy.Publisher("/results/yolo_error", Twist, queue_size=10)
 
     est_pose_msg = Twist()
 
@@ -220,25 +224,17 @@ def main():
             current_bounding_boxes = get_test_bounding_boxes()
         else:
             current_bounding_boxes = global_bounding_boxes
-        # rospy.loginfo(global_bounding_boxes)
         if (current_bounding_boxes is not None) and (current_bounding_boxes != previous_bounding_boxes):
             previous_bounding_boxes = current_bounding_boxes
             center_px, radius_px, rotation = estimate_center_rotation_and_radius(current_bounding_boxes.bounding_boxes)
             # rospy.loginfo('center_px: %s,  radius_px: %s,  rotation: %s', center_px, radius_px, rotation)
             current_pose_estimate = transform_pixel_position_to_world_coordinates(center_px, radius_px)
             current_pose_estimate.angular.z = rotation if rotation is not None else current_pose_estimate.angular.z
-            # rospy.loginfo('current_est: %s', current_pose_estimate)
-        # rospy.loginfo('current_ground_truth: %s', current_ground_truth)
-        current_error = calculate_estimation_error(current_pose_estimate, current_ground_truth)
-        # rospy.loginfo('current_error: %s', current_error)
-
-        if current_pose_estimate is not None:
             pub_est.publish(current_pose_estimate)
+
+        current_error = calculate_estimation_error(current_pose_estimate, current_ground_truth)
         if current_error is not None:
             pub_error.publish(current_error)
-        # if current_ground_truth is not None:
-        #     pub_ground_truth.publish(current_ground_truth)
-
 
         rate.sleep()
 
