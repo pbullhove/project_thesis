@@ -6,6 +6,7 @@ import matplotlib.gridspec as gridspec # For custom subplot grid
 import numpy as np
 import time
 import sys
+import os
 
 def load_data(filename):
     folder = './catkin_ws/src/uav_vision/data_storage/'
@@ -39,15 +40,15 @@ def load_data(filename):
 def plot_xyz(time, gt, est, savename):
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111,projection='3d')
-    plt.title('Estimated trajectory xy')
+    plt.title('Estimated trajectory xyz')
     est, = plt.plot(est[:,0], est[:,1], est[:,2])
     gt, = plt.plot( gt[:,0], gt[:,1], gt[:,2])
-    plt.legend([est, gt], ['yolo estimate x,y, z', 'ground truth x, y, z'])
+    plt.legend([est, gt], ['estimate x,y, z', 'ground truth x, y, z'])
 
     folder = './catkin_ws/src/uav_vision/data_storage/plots/'
     plt.savefig(folder+savename+'.svg')
     fig.tight_layout()
-    fig.show()
+    # fig.show()
     try:
         plt.waitforbuttonpress()
         plt.close()
@@ -59,12 +60,12 @@ def plot_xy(time, gt, est, savename):
     plt.title('Estimated trajectory xy')
     e, = plt.plot(est[:,0], est[:,1])
     gt, = plt.plot(gt[:,0], gt[:,1])
-    plt.legend([e, gt], ['yolo estimate x,y', 'ground truth x, y'])
+    plt.legend([e, gt], ['estimate x,y', 'ground truth x, y'])
 
     folder = './catkin_ws/src/uav_vision/data_storage/plots/'
     plt.savefig(folder+savename+'.svg')
     fig.tight_layout()
-    fig.show()
+    # fig.show()
     try:
         plt.waitforbuttonpress(0)
         plt.close()
@@ -73,12 +74,10 @@ def plot_xy(time, gt, est, savename):
 
 
 def est_plot(time, gt, est, savename):
-    file_title = 'yolo_v4_tiny_estimate_vs_gt_hovering'
     variables = ['x', 'y', 'z', 'yaw']
     legend_values = ['est_x', 'est_y' ,'est_z', 'est_yaw']
     subtitles = variables
     fig = plt.figure(figsize=(12,8))
-    plt.title('Yolo estimate while hovering')
     for i in range(4):
         k = i + 2 if i == 3 else i
         ax = plt.subplot(2,2,i+1)
@@ -89,7 +88,7 @@ def est_plot(time, gt, est, savename):
         plt.grid()
         plt.title(subtitles[i])
         data_line, = ax.plot(time,est[:,k], color='b')
-        data_line.set_label('yolo_estimate')
+        data_line.set_label('estimate')
         gt_line, = ax.plot(time,gt[:,k], color='r')
         plt.legend([data_line, gt_line],[legend_values[i],'ground truth'])
 
@@ -97,7 +96,41 @@ def est_plot(time, gt, est, savename):
     plt.savefig(folder+savename+'.svg')
 
     fig.tight_layout()
-    fig.show()
+    # fig.show()
+
+    try:
+        plt.waitforbuttonpress(0)
+        plt.close()
+    except Exception as e:
+        pass
+
+
+def est_plot_comb(time, gt, yolo, tcv, savename):
+    file_title = 'yolo_v4_tiny_estimate_vs_gt_hovering'
+    variables = ['x', 'y', 'z', 'yaw']
+    yolo_legend_values = ['est_yolo_x', 'est_yolo_y' ,'est_yolo_z', 'est_yolo_yaw']
+    tcv_legend_values = ['est_tcv_x', 'est_tcv_y' ,'est_tcv_z', 'est_tcv_yaw']
+    subtitles = variables
+    fig = plt.figure(figsize=(12,8))
+    plt.title('Yolo estimate while hovering')
+    for i in range(4):
+        k = i + 2 if i == 3 else i
+        ax = plt.subplot(2,2,i+1)
+        ax.set_xlabel('Time [s]')
+        ax.set_ylabel('[deg]' if i == 3 else '[m]')
+        ax.axhline(y=0, color='grey', linestyle='--')
+        plt.grid()
+        plt.title(subtitles[i])
+        yolo_line, = ax.plot(time,yolo[:,k], color='b')
+        tcv_line, = ax.plot(time, tcv[:,k], color = 'g')
+        gt_line, = ax.plot(time,gt[:,k], color='r')
+        plt.legend([yolo_line, tcv_line, gt_line],[yolo_legend_values[i],tcv_legend_values[i], 'ground truth'])
+
+    folder = './catkin_ws/src/uav_vision/data_storage/plots/'
+    plt.savefig(folder+savename+'.svg')
+
+    fig.tight_layout()
+    # fig.show()
 
     try:
         plt.waitforbuttonpress(0)
@@ -106,14 +139,27 @@ def est_plot(time, gt, est, savename):
         pass
 
 def main():
+    for file in os.listdir("./catkin_ws/src/uav_vision/data_storage"):
+        try:
+            loadname = file
+            savename = loadname.split('.')[0]
+            time, gt, yolo, tcv, yolo_error, filtered = load_data(loadname)
+        except Exception as e:
+            continue
 
-    loadname = 'hovering_5m_yolov4t_256_fb_comb.npy'
-    savename = loadname.split('.')[0]
-
-    time, gt, yolo, tcv, yolo_error, filtered = load_data(loadname)
-    est_plot(time, gt, yolo, savename +"_var_plot")
-    plot_xy(time, gt, yolo, savename+"_xy_plot")
-    plot_xyz(time, gt, yolo, savename+"_xyz_plot")
+        if savename.split('_')[-1] == 'comb':
+            est_plot_comb(time, gt, yolo, tcv, savename + "_var_plot")
+            est_plot(time, gt, filtered, savename + "_filtered_var_plot")
+        elif savename.split('_')[-1] == 'yolo':
+            est_plot(time, gt, yolo, savename +"_var_plot")
+        elif savename.split('_')[-1] == 'tcv':
+            est_plot(time, gt, yolo, savename + "_var_plot")
+        else:
+            est_plot_comb(time, gt, yolo, tcv, savename + "_var_plot")
+            est_plot(time, gt, filtered, savename + "_filtered_var_plot")
+        if savename.split('_')[0] == 'landing':
+            plot_xy(time, gt, filtered, savename+"_xy_plot")
+            plot_xyz(time, gt, filtered, savename+"_xyz_plot")
 
 
 if __name__ == '__main__':

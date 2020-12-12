@@ -77,7 +77,7 @@ def estimate_error_dead_reckoning_callback(data):
 #
 global_est_tcv = np.zeros(6)
 def est_tcv_callback(data):
-    global global_est_est_tcv
+    global global_est_tcv
     global_est_tcv = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
 
 
