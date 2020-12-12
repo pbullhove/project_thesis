@@ -170,7 +170,7 @@ def downscale_H_by_rotation(H, rotation):
 
 
 def estimate_center_rotation_and_radius(bounding_boxes):
-    H_bb_radius_scale_factor = 2.45
+    H_bb_radius_scale_factor = 2.60
     # rospy.loginfo(bounding_boxes)
     classes = list(item.Class for item in bounding_boxes)
     # rospy.loginfo(classes)
