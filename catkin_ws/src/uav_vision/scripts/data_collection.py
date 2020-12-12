@@ -74,6 +74,13 @@ def estimate_error_dead_reckoning_callback(data):
     global global_est_error_dead_reckoning
     global_est_error_dead_reckoning = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
 
+#
+global_est_tcv = np.zeros(6)
+def est_tcv_callback(data):
+    global global_est_est_tcv
+    global_est_tcv = np.array([data.linear.x, data.linear.y, data.linear.z, 0, 0, data.angular.z])
+
+
 global_filtered_estimate = np.zeros(6)
 def filtered_estimate_callback(data):
     global global_filtered_estimate
@@ -128,6 +135,8 @@ def main(test_number):
     rospy.Subscriber('/estimate/arrow', Twist, estimate_arrow_callback)
     rospy.Subscriber('/estimate/corners', Twist, estimate_corners_callback)
     rospy.Subscriber('/estimate/dead_reckoning', Twist, estimate_dead_reckoning_callback)
+    rospy.Subscriber('/estimate/tcv_estimate', Twist, est_tcv_callback)
+
 
     rospy.Subscriber('/estimate_error/ellipse', Twist, estimate_error_ellipse_callback)
     rospy.Subscriber('/estimate_error/arrow', Twist, estimate_error_arrow_callback)
@@ -152,7 +161,7 @@ def main(test_number):
 
     data_array = []
 
-    duration = 1500 # seconds
+    duration = 40 # seconds
 
     rate = rospy.Rate(20) # Hz
     while not rospy.is_shutdown():
@@ -172,15 +181,16 @@ def main(test_number):
                 # global_est_corners,
                 # global_est_dead_reckoning,
                 global_est_yolo,
+                global_est_tcv,
 
                 # Estimate errors
                 # global_est_error_ellipse,
                 # global_est_error_arrow,
                 # global_est_error_corners,
                 # global_est_error_dead_reckoning,
-                global_est_error_yolo
+                global_est_error_yolo,
                 # Filtered estimate
-                # global_filtered_estimate
+                global_filtered_estimate
                 )
             )
             # print len(data_array)
@@ -200,7 +210,7 @@ def main(test_number):
     folder = './catkin_ws/src/uav_vision/data_storage/'
 
 
-    filename = 'test_'+str(test_number)+'.npy'
+    filename = 'unnamed.npy'
     path = folder+filename
     np.save(path, np.array(data_array))
 
