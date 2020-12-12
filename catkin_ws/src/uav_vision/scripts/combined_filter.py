@@ -55,8 +55,8 @@ def main():
 
     rospy.loginfo("Starting combined filter for estimate")
 
-    average_filter_size = 5
-    median_filter_size = 5
+    average_filter_size = 3
+    median_filter_size = 3
 
     estimate_history_size = median_filter_size + average_filter_size - 1
     estimate_history = np.zeros((estimate_history_size,6))
